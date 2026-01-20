@@ -5,10 +5,32 @@ const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     console.log('Login attempt:', { email, password });
-    // Add login logic here
+
+    try {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        console.log('Login successful:', data);
+        alert('Login successful!');
+      } else {
+        console.error('Login failed:', data);
+        alert(`Login failed: ${data.message || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error('Error during login:', error);
+      alert('An error occurred. Please try again.');
+    }
   };
 
   return (
@@ -18,7 +40,7 @@ const Login = () => {
           <h1>Welcome Back</h1>
           <p>Please enter your details to sign in</p>
         </div>
-        
+
         <form onSubmit={handleSubmit} className="login-form">
           <div className="form-group">
             <label htmlFor="email">Email Address</label>
