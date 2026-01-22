@@ -1,49 +1,41 @@
-import { useState } from 'react';
-import Login from './pages/Login';
+import { Route, Routes, Navigate } from 'react-router-dom';
+import { useAuth0, withAuthenticationRequired } from '@auth0/auth0-react';
+import useUserSync from './hooks/useUserSync';
 import ShoppingCartPage from './pages/shoppingCart/shopingCart';
 import UserProfilePage from './pages/userProfile/userProfile';
+import ProductListingPage from './pages/productListing/productListing';
+import Header from './components/Header';
 import './App.css';
 
-function App() {
-  const [currentPage, setCurrentPage] = useState<'login' | 'cart' | 'profile'>('login');
+// Protected Route Wrapper
+const ProtectedRoute = ({ component }: { component: React.ComponentType }) => {
+  const Component = withAuthenticationRequired(component, {
+    onRedirecting: () => <div className="flex justify-center items-center h-screen">Loading...</div>,
+  });
+  return <Component />;
+};
 
-  const renderPage = () => {
-    switch (currentPage) {
-      case 'login': return <Login />;
-      case 'cart': return <ShoppingCartPage />;
-      case 'profile': return <UserProfilePage />;
-      default: return <Login />;
-    }
-  };
+function App() {
+  const { isLoading } = useAuth0();
+  useUserSync();
+
+  if (isLoading) {
+    return <div className="flex justify-center items-center h-screen text-emerald-600">Loading Choce Moments...</div>;
+  }
 
   return (
-    <div className="app-container">
-      {/* Temporary Navigation for Demo */}
-      <nav className="bg-gray-800 text-white p-4 sticky top-0 z-50 shadow-md">
-        <div className="max-w-7xl mx-auto flex gap-6 justify-center">
-          <button
-            onClick={() => setCurrentPage('login')}
-            className={`px-4 py-2 rounded-md transition-colors ${currentPage === 'login' ? 'bg-emerald-600 font-bold' : 'hover:bg-gray-700'}`}
-          >
-            Login
-          </button>
-          <button
-            onClick={() => setCurrentPage('cart')}
-            className={`px-4 py-2 rounded-md transition-colors ${currentPage === 'cart' ? 'bg-emerald-600 font-bold' : 'hover:bg-gray-700'}`}
-          >
-            Shopping Cart
-          </button>
-          <button
-            onClick={() => setCurrentPage('profile')}
-            className={`px-4 py-2 rounded-md transition-colors ${currentPage === 'profile' ? 'bg-emerald-600 font-bold' : 'hover:bg-gray-700'}`}
-          >
-            User Profile
-          </button>
-        </div>
-      </nav>
-
-      <main>
-        {renderPage()}
+    <div className="app-container min-h-screen bg-gray-50 flex flex-col font-sans">
+      {/* Header handles its own navigation via Links now (to be updated) */}
+      <Header />
+      <main className="flex-grow w-full">
+        <Routes>
+          <Route path="/" element={<Navigate to="/products" replace />} />
+          <Route path="/products" element={<ProductListingPage />} />
+          <Route path="/cart" element={<ProtectedRoute component={ShoppingCartPage} />} />
+          <Route path="/profile" element={<ProtectedRoute component={UserProfilePage} />} />
+          {/* Fallback */}
+          <Route path="*" element={<Navigate to="/products" replace />} />
+        </Routes>
       </main>
     </div>
   );

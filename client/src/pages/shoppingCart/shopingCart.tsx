@@ -1,50 +1,66 @@
 import React, { useState, useEffect } from 'react';
 import { Trash2, Plus, Minus, ShoppingCart } from 'lucide-react';
+import { useAuth0 } from '@auth0/auth0-react';
 
 interface CartItem {
-    id: number;
+    id: string; // Changed from number to string (UUID)
     name: string;
     price: number;
     image: string;
     quantity: number;
 }
 
-// Mock Data
-const INITIAL_CART_ITEMS: CartItem[] = [
-    {
-        id: 1,
-        name: 'Organic Fresh Avocados (2 Pack)',
-        price: 5.99,
-        image: 'https://images.unsplash.com/photo-1523049673856-388668a75502?q=80&w=200&auto=format&fit=crop',
-        quantity: 1,
-    },
-    {
-        id: 2,
-        name: 'Whole Grain Sourdough Bread',
-        price: 4.50,
-        image: 'https://images.unsplash.com/photo-1585476644321-b97621c337c9?q=80&w=200&auto=format&fit=crop',
-        quantity: 2,
-    },
-    {
-        id: 3,
-        name: 'Raw Organic Honey (500g)',
-        price: 12.99,
-        image: 'https://images.unsplash.com/photo-1587049352846-4a222e784d38?q=80&w=200&auto=format&fit=crop',
-        quantity: 1,
-    },
-];
+// Mock Data NOT USED - Fetching from API
+const INITIAL_CART_ITEMS: CartItem[] = [];
 
 const ShoppingCartPage: React.FC = () => {
+    const { getAccessTokenSilently, isAuthenticated } = useAuth0();
     const [cartItems, setCartItems] = useState<CartItem[]>(INITIAL_CART_ITEMS);
     const [subtotal, setSubtotal] = useState(0);
     const [discountCode, setDiscountCode] = useState('');
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchCart = async () => {
+            try {
+                if (!isAuthenticated) {
+                    setLoading(false);
+                    return;
+                }
+
+                const token = await getAccessTokenSilently();
+                const response = await fetch('http://localhost:5000/api/cart', {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    setCartItems(data);
+                } else {
+                    console.error('Failed to fetch cart');
+                }
+            } catch (error) {
+                console.error('Error fetching cart:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchCart();
+    }, [getAccessTokenSilently, isAuthenticated]);
 
     useEffect(() => {
         const total = cartItems.reduce((acc, item) => acc + item.price * item.quantity, 0);
         setSubtotal(total);
     }, [cartItems]);
 
-    const updateQuantity = (id: number, delta: number) => {
+    if (loading) {
+        return <div className="min-h-screen flex items-center justify-center">Loading cart...</div>;
+    }
+
+    const updateQuantity = (id: string, delta: number) => {
         setCartItems((prevItems) =>
             prevItems.map((item) =>
                 item.id === id
@@ -54,7 +70,7 @@ const ShoppingCartPage: React.FC = () => {
         );
     };
 
-    const removeItem = (id: number) => {
+    const removeItem = (id: string) => {
         setCartItems((prevItems) => prevItems.filter((item) => item.id !== id));
     };
 

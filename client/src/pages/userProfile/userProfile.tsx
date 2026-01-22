@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { User, Package, MapPin, Phone, Mail, Camera, Save } from 'lucide-react';
+import { useAuth0 } from '@auth0/auth0-react';
 
 interface UserProfile {
     name: string;
@@ -30,6 +31,58 @@ const RECENT_ORDERS: Order[] = [
     { id: '#ORD-7781', date: 'Oct 15, 2023', status: 'Shipped', total: 128.50 },
     { id: '#ORD-7780', date: 'Sep 28, 2023', status: 'Processing', total: 32.00 },
 ];
+
+const VerificationButton = () => {
+    const { getAccessTokenSilently } = useAuth0();
+    const [result, setResult] = useState<string | null>(null);
+
+    const handleVerifyAuth = async () => {
+        try {
+            console.log("--- Frontend Auth Verification ---");
+
+            // Step 1: Get Token
+            const token = await getAccessTokenSilently();
+            console.log("Access Token:", token);
+
+            // Step 2: Call Backend
+            console.log("Sending Request to /api/verify-auth...");
+            const response = await fetch('http://localhost:5000/api/verify-auth', {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            console.log("Response Status:", response.status);
+
+            const data = await response.json();
+            console.log("Response Body:", data);
+
+            setResult(JSON.stringify(data, null, 2));
+
+        } catch (error) {
+            console.error("Verification Failed:", error);
+            setResult("Error: " + error);
+        }
+    };
+
+    return (
+        <div className="space-y-4">
+            <button
+                onClick={handleVerifyAuth}
+                className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition-colors text-sm font-medium"
+            >
+                Verify Backend Connection
+            </button>
+            {result && (
+                <pre className="text-xs bg-gray-900 text-green-400 p-4 rounded overflow-auto mt-2 h-40">
+                    {result}
+                </pre>
+            )}
+        </div>
+    );
+};
 
 const UserProfilePage: React.FC = () => {
     const [profile, setProfile] = useState<UserProfile>(MOCK_USER);
@@ -107,6 +160,12 @@ const UserProfilePage: React.FC = () => {
                                     Edit
                                 </button>
                             )}
+                        </div>
+
+                        {/* Auth Verification Section */}
+                        <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                            <h3 className="text-sm font-bold text-gray-700 mb-2">Developer Tools</h3>
+                            <VerificationButton />
                         </div>
 
                         <form onSubmit={handleSave} className="grid grid-cols-1 md:grid-cols-2 gap-6">
