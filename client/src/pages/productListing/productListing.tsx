@@ -2,7 +2,6 @@ import { Heart, Plus } from 'lucide-react';
 import { useAuth0 } from '@auth0/auth0-react';
 import { useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-import ForceSyncUser from '../../components/ForceSyncUser';
 
 // --- Types ---
 interface Product {
@@ -178,7 +177,6 @@ const ProductListingPage = () => {
             </div>
 
             <Footer />
-            <ForceSyncUser />
         </div>
     );
 };

@@ -22,9 +22,6 @@ app.use('/api/products', productRoutes);
 const userRoutes = require('./routes/user.routes');
 app.use('/api/user', userRoutes);
 
-const debugRoutes = require('./routes/debug.routes');
-app.use('/api/debug', debugRoutes);
-
 app.get('/', (req, res) => {
   res.send('Server is running');
 });
